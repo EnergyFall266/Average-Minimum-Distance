@@ -16,7 +16,7 @@ void md_all_pairs (uint32_t* dists, uint32_t v) {
                 uint32_t intermediary = dists[i*v+k] + dists[k*v+j];
                 // Checks for overflows
                 if ((intermediary >= dists[i*v+k])&&(intermediary >= dists[k*v+j])&&(intermediary < dists[i*v+j]))
-                    dists[i*v+j] = 1;//dists[i*v+k] + dists[k*v+j];
+                    dists[i*v+j] = dists[i*v+k] + dists[k*v+j];
             }
         }
     }
