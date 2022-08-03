@@ -9,19 +9,28 @@
 void md_all_pairs (uint32_t* dists, uint32_t v) {
     uint32_t k, i, j;
 // paralelizar
-    #pragma omp parallel for
+printf("md\n");
+    #pragma omp parallel num_threads(4) 
+    { 
+        int nt = omp_get_num_threads();
+        int id = omp_get_thread_num();
+        // printf("num threads: %d\n", nt);
+        // printf("thread: %d\n", id);
+        
+    #pragma omp for private(k, i, j) 
     for (k = 0; k < v; ++k) {
         for (i = 0; i < v; ++i) {
             for (j = 0; j < v; ++j) {
                 uint32_t intermediary = dists[i*v+k] + dists[k*v+j];
                 // Checks for overflows
-                if ((intermediary >= dists[i*v+k])&&(intermediary >= dists[k*v+j])&&(intermediary < dists[i*v+j]))
+                if ((intermediary >= dists[i*v+k])&&(intermediary >= dists[k*v+j]) && (intermediary < dists[i*v+j]))
                     dists[i*v+j] = dists[i*v+k] + dists[k*v+j];
             }
         }
     }
-
 }
+
+} 
 
 /* Computes the average minimum distance between all pairs of vertices with a path connecting them */
 void amd (uint32_t* dists, uint32_t v) {
@@ -31,7 +40,15 @@ void amd (uint32_t* dists, uint32_t v) {
 	uint32_t paths = 0; //number of paths found
 	uint32_t solution = 0;
 // paralelizar
-    #pragma omp parallel for reduction(+:smd)
+printf("amd\n");
+    #pragma omp parallel num_threads(4) 
+    {
+        int nt = omp_get_num_threads();
+        int id = omp_get_thread_num();
+        // printf("num threads: %d\n", nt);
+        // printf("thread: %d\n", id);
+        
+    #pragma omp for reduction(+:smd)
     for (i = 0; i < v; ++i) {
         for (j = 0; j < v; ++j) {
 			// We only consider if the vertices are different and there is a path
@@ -41,7 +58,7 @@ void amd (uint32_t* dists, uint32_t v) {
 			}
         }
     }
-
+}
 	solution = smd / paths;
 	printf("%d\n", solution);
 
@@ -82,16 +99,17 @@ int main (int argc, char* argv[]) {
         scanf("%u %u %u", &source, &dest, &cost);
         if (cost < dists[source*v+dest]) dists[source*v+dest] = cost;
     }
-    int inicio;
-    inicio = omp_get_wtime();
+    int inicio1, inicio2;
+    inicio1 = omp_get_wtime();
 	//Computes the minimum distance for all pairs of vertices
     md_all_pairs(dists, v);
-
+    // printf("tempo1: %f\n", (omp_get_wtime()-inicio1)/60);
     //Computes and prints the final solution
-   amd(dists, v);
-    printf("tempo: %f\n", (omp_get_wtime()-inicio)/60);
+    // inicio2 = omp_get_wtime();
+    amd(dists, v);
+    printf("tempo2: %f\n", (omp_get_wtime()-inicio1)/60);
 #if DEBUG
-	debug(dists, v);
+	//debug(dists, v);
 #endif
 
     return 0;
